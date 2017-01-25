@@ -46,12 +46,30 @@ void main(void)
 
     //Mount SD or CTRNAND
     bool isSdMode;
-    if(mountFs(true, false)) isSdMode = true;
-    else
+    u32 bootSource = (*(vu32*)(0x23F00000-4));
+
+    switch(bootSource)
     {
-        firmSource = FIRMWARE_SYSNAND;
-        if(!mountFs(false, true)) error("Failed to mount SD and CTRNAND.");
-        isSdMode = false;
+        // Booted From SD
+        case 1:
+          mountFs(true);
+          isSdMode = true;
+          break;
+        // Booted From NAND
+        case 2:
+          mountFs(false);
+          isSdMode = false;
+          break;
+          // Unknown boot (old a9lh install)
+        default:
+          if(mountFs(true)) isSdMode = true;
+          else
+          {
+              firmSource = FIRMWARE_SYSNAND;
+              if(!mountFs(false)) error("Failed to mount SD and CTRNAND.");
+              isSdMode = false;
+          }
+          break;
     }
 
     //Attempt to read the configuration file
@@ -125,7 +143,7 @@ void main(void)
 
     u32 pinMode = MULTICONFIG(PIN);
     bool hidePin = CONFIG(HIDEPIN);
-    bool pinExists = pinMode != 0 && verifyPin(pinMode, hidePin);
+    bool pinExists = pinMode != 0 && verifyPin(pinMode, hidePin, isSdMode);
 
     //If no configuration file exists or SELECT is held, load configuration menu
     bool shouldLoadConfigMenu = needConfig == CREATE_CONFIGURATION || ((pressed & (BUTTON_SELECT | BUTTON_L1)) == BUTTON_SELECT);
@@ -237,7 +255,7 @@ boot:
         writeConfig(needConfig, configTemp);
     }
 
-    if(isSdMode && !mountFs(false, false)) error("Failed to mount CTRNAND.");
+    if(isSdMode && !mountFs(false)) error("Failed to mount CTRNAND.");
 
     bool loadFromStorage = CONFIG(LOADEXTFIRMSANDMODULES);
     u32 firmVersion = loadFirm(&firmType, firmSource, loadFromStorage, isSafeMode);

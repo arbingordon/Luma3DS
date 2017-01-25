@@ -29,8 +29,9 @@
 #include "types.h"
 
 #define PIN_FILE         "pin.bin"
+#define PIN_BACKUP       "pinbackup.txt"
 #define PIN_VERSIONMAJOR 1
 #define PIN_VERSIONMINOR 3
 
-void newPin(bool allowSkipping, u32 pinMode);
-bool verifyPin(u32 pinMode, bool hidePin);
+void newPin(bool allowSkipping, u32 pinMode, bool isSdMode);
+bool verifyPin(u32 pinMode, bool hidePin, bool isSdMode);

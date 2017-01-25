@@ -241,6 +241,16 @@ void configMenu(bool isSdMode, bool oldPinStatus, u32 oldPinMode)
         singleOptions[i].enabled = CONFIG(i);
 
     initScreens();
+    u32 bootSource = (*(vu32*)(0x23F00000-4));
+
+    char *bootStr = NULL;
+    switch(bootSource)
+    {
+        case 1: bootStr = "SD"; break;
+        case 2: bootStr = "NAND"; break;
+        default: bootStr = "Unknown"; break;
+    }
+    drawString(bootStr, true, 10, 0, COLOR_RED);
 
     drawString(CONFIG_TITLE, true, 10, 10, COLOR_TITLE);
     drawString("Press A to select, START to save", true, 10, 10 + SPACING_Y, COLOR_TITLE);
@@ -394,7 +404,7 @@ void configMenu(bool isSdMode, bool oldPinStatus, u32 oldPinMode)
 
     u32 newPinMode = MULTICONFIG(PIN);
 
-    if(newPinMode != 0) newPin(oldPinStatus && newPinMode == oldPinMode, newPinMode);
+    if(newPinMode != 0) newPin(oldPinStatus && newPinMode == oldPinMode, newPinMode, isSdMode);
     else if(oldPinStatus) fileDelete(PIN_FILE);
 
     while(HID_PAD & PIN_BUTTONS);

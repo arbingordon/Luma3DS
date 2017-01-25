@@ -51,10 +51,10 @@ static bool switchToMainDir(bool isSd)
     }
 }
 
-bool mountFs(bool isSd, bool switchToCtrNand)
+bool mountFs(bool isSd)
 {
-    return isSd ? f_mount(&sdFs, "0:", 1) == FR_OK && switchToMainDir(true) :
-                  f_mount(&nandFs, "1:", 1) == FR_OK && (!switchToCtrNand || (f_chdrive("1:") == FR_OK && switchToMainDir(false)));
+    return isSd ? f_mount(&sdFs, "0:", 1) == FR_OK && (f_chdrive("0:") == FR_OK && switchToMainDir(true)) :
+                  f_mount(&nandFs, "1:", 1) == FR_OK && (f_chdrive("1:") == FR_OK && switchToMainDir(false));
 }
 
 u32 fileRead(void *dest, const char *path, u32 maxSize)

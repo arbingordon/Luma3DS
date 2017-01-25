@@ -44,7 +44,7 @@ static char pinKeyToLetter(u32 pressed)
     return keys[31 - i];
 }
 
-void newPin(bool allowSkipping, u32 pinMode)
+void newPin(bool allowSkipping, u32 pinMode, bool isSdMode)
 {
     clearScreens(false);
 
@@ -120,9 +120,16 @@ void newPin(bool allowSkipping, u32 pinMode)
 
     if(!fileWrite(&pin, PIN_FILE, sizeof(PinData)))
         error("Error writing the PIN file");
+    // save recovery file
+    if(!isSdMode)
+      mountFs(true);
+    if(!fileWrite(&enteredPassword, PIN_BACKUP, sizeof(enteredPassword)))
+        error("Error writing the PIN backup file");
+    if(!isSdMode)
+      mountFs(false);
 }
 
-bool verifyPin(u32 pinMode, bool hidePin)
+bool verifyPin(u32 pinMode, bool hidePin, bool isSdMode)
 {
     PinData pin;
 
@@ -166,6 +173,15 @@ bool verifyPin(u32 pinMode, bool hidePin)
     bool unlock = false,
          reset = false;
     u8 cnt = 0;
+
+    // bypass pin if pin backup is available
+    if(!isSdMode)
+      mountFs(true);
+    fileRead(&enteredPassword, PIN_BACKUP, sizeof(enteredPassword));
+    computePinHash(tmp, enteredPassword);
+    unlock = memcmp(pin.hash, tmp, sizeof(tmp)) == 0;
+    if(!isSdMode)
+      mountFs(false);
 
     while(!unlock)
     {

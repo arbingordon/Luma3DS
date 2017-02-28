@@ -170,7 +170,7 @@ void loadPayload(u32 pressed, const char *payloadPath)
     ((void (*)())loaderAddress)();
 }
 
-void payloadMenu(void)
+void payloadMenu(bool isSdMode)
 {
     DIR dir;
     char path[62] = "payloads";
@@ -203,9 +203,12 @@ void payloadMenu(void)
     if(!payloadNum) return;
 
     initScreens();
-
+    
+    u32 bootSource = drawBootSource();
+    
     drawString("Luma3DS chainloader", true, 10, 10, COLOR_TITLE);
     drawString("Press A to select, START to quit", true, 10, 10 + SPACING_Y, COLOR_TITLE);
+    drawString("Select to change folder, Y to change boot", true, 10, 20 + SPACING_Y, COLOR_TITLE);
 
     for(u32 i = 0, posY = 10 + 3 * SPACING_Y, color = COLOR_RED; i < payloadNum; i++, posY += SPACING_Y)
     {
@@ -216,13 +219,13 @@ void payloadMenu(void)
     u32 pressed = 0,
         selectedPayload = 0;
 
-    while(pressed != BUTTON_A && pressed != BUTTON_START)
+    while(pressed != BUTTON_A && pressed != BUTTON_START && pressed != BUTTON_SELECT)
     {
         do
         {
             pressed = waitInput(true);
         }
-        while(!(pressed & MENU_BUTTONS));
+        while(!(pressed & (MENU_BUTTONS | BUTTON_SELECT | BUTTON_Y)));
 
         u32 oldSelectedPayload = selectedPayload;
 
@@ -240,6 +243,10 @@ void payloadMenu(void)
             case BUTTON_RIGHT:
                 selectedPayload = payloadNum - 1;
                 break;
+            case BUTTON_Y:
+                (*(vu32*)(0x23F00000-4)) = bootSource = bootSource != 1 ? 1 : 2;
+                drawBootSource();
+                break;
             default:
                 continue;
         }
@@ -255,8 +262,21 @@ void payloadMenu(void)
         concatenateStrings(path, "/");
         concatenateStrings(path, payloadList[selectedPayload]);
         concatenateStrings(path, ".bin");
+        drawString("Booting:", false, SPACING_X, SPACING_Y, COLOR_WHITE);
+        drawString(payloadList[selectedPayload], false, SPACING_X, 2 * SPACING_Y, COLOR_WHITE);
+        for(int i=0; i < 5; i++)
+        {
+          drawCharacter('.', false, (strlen(payloadList[selectedPayload]) + 1 + i) * SPACING_X, 2 * SPACING_Y, COLOR_WHITE);
+          wait(100ULL);
+        }
         loadPayload(0, path);
         error("The payload is too large or corrupted.");
+    }
+    
+    if(pressed == BUTTON_SELECT)
+    {
+        mountFs(!isSdMode);
+        payloadMenu(!isSdMode);
     }
 
     while(HID_PAD & MENU_BUTTONS);

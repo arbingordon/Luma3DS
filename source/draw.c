@@ -108,3 +108,21 @@ u32 drawString(const char *string, bool isTopScreen, u32 posX, u32 posY, u32 col
 
     return posY;
 }
+u32 drawBootSource(void)
+{
+    u32 bootSource = (*(vu32*)(0x23F00000-4));
+    char buf[100];memset(buf,0,100);
+    for(int i=0; i < 39; i++)
+    {
+        drawCharacter((char)0xDB, true, 10 + i * SPACING_X, 0, COLOR_BLACK);
+    }
+    switch(bootSource)
+    {
+        case 1: concatenateStrings(buf, "SD"); break;
+        case 2: concatenateStrings(buf, "NAND"); break;
+        default: concatenateStrings(buf, "Unknown"); break;
+    }
+    concatenateStrings(buf, " mode");
+    drawString(buf, true, 10, 0, COLOR_RED);
+    return bootSource;
+}

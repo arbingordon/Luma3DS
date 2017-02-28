@@ -188,7 +188,7 @@ bool verifyPin(u32 pinMode, bool hidePin, bool isSdMode)
         if(reset)
         {
             for(u32 i = 0; i < cnt; i++) 
-                drawCharacter((char)enteredPassword[i], true, 10 + (16 + 2 * i) * SPACING_X, 10 + 3 * SPACING_Y, COLOR_BLACK);
+                drawCharacter((char)(0xDB), true, 10 + (16 + 2 * i) * SPACING_X, 10 + 3 * SPACING_Y, COLOR_BLACK);
 
             cnt = 0;
             reset = false;
